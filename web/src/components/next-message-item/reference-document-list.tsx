@@ -1,7 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Docagg } from '@/interfaces/database/chat';
 import FileIcon from '../file-icon';
-import NewDocumentLink from '../new-document-link';
 
 export function ReferenceDocumentList({ list }: { list: Docagg[] }) {
   return (
@@ -10,15 +9,12 @@ export function ReferenceDocumentList({ list }: { list: Docagg[] }) {
         <Card key={item.doc_id}>
           <CardContent className="p-2 space-x-2">
             <FileIcon id={item.doc_id} name={item.doc_name}></FileIcon>
-            <NewDocumentLink
-              documentId={item.doc_id}
-              documentName={item.doc_name}
-              prefix="document"
-              link={item.url}
+            <span
               className="text-text-sub-title-invert"
+              style={{ wordBreak: 'break-all' }}
             >
               {item.doc_name}
-            </NewDocumentLink>
+            </span>
           </CardContent>
         </Card>
       ))}
