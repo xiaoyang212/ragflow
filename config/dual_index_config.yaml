@@ -2,9 +2,10 @@
 # This configuration enables both GraphRAG (concept graph) and RAPTOR (summary tree) indexing and retrieval
 
 # Knowledge Base Configuration
+# You can also set these via environment variables: TENANT_ID and KB_ID
 knowledgebase:
-  tenant_id: "your_tenant_id"  # Replace with actual tenant ID
-  kb_id: "your_kb_id"          # Replace with actual knowledge base ID
+  tenant_id: "your_tenant_id"  # Replace with actual tenant ID or use $TENANT_ID env var
+  kb_id: "your_kb_id"          # Replace with actual knowledge base ID or use $KB_ID env var
   kb_name: "Dual Index KB"
 
 # LLM Configuration

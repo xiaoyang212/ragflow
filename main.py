@@ -24,6 +24,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+from datetime import datetime
 
 import yaml
 
@@ -31,6 +32,15 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 
 from common import settings
+from common.misc_utils import get_uuid
+import os
+
+# Constants
+AVAILABLE_CHUNK_FLAG = 1
+RAPTOR_KEYWORD = "raptor"
+CONTENT_PREVIEW_LENGTH = 500
+PLACEHOLDER_TENANT_ID = "your_tenant_id"
+PLACEHOLDER_KB_ID = "your_kb_id"
 from common.constants import LLMType
 from api.db.services.knowledgebase_service import KnowledgebaseService
 from api.db.services.document_service import DocumentService
@@ -68,8 +78,35 @@ def validate_config(config: dict):
     if 'tenant_id' not in kb_config or 'kb_id' not in kb_config:
         raise ValueError("knowledgebase configuration must include tenant_id and kb_id")
     
-    if kb_config['tenant_id'] == 'your_tenant_id' or kb_config['kb_id'] == 'your_kb_id':
-        raise ValueError("Please update tenant_id and kb_id in the configuration file")
+    # Check for placeholder values
+    placeholder_patterns = ['your_', 'example_', 'placeholder_', 'replace_', 'todo_']
+    for field_name, field_value in [('tenant_id', kb_config['tenant_id']), ('kb_id', kb_config['kb_id'])]:
+        if isinstance(field_value, str):
+            field_lower = field_value.lower()
+            if any(pattern in field_lower for pattern in placeholder_patterns):
+                raise ValueError(
+                    f"Please update {field_name} in the configuration file. "
+                    f"Current value '{field_value}' appears to be a placeholder. "
+                    f"You can also use environment variables: "
+                    f"TENANT_ID and KB_ID"
+                )
+    
+    # Allow environment variable override
+    if kb_config['tenant_id'] == PLACEHOLDER_TENANT_ID:
+        env_tenant_id = os.environ.get('TENANT_ID')
+        if env_tenant_id:
+            kb_config['tenant_id'] = env_tenant_id
+            logger.info(f"Using TENANT_ID from environment: {env_tenant_id}")
+        else:
+            raise ValueError("Please set tenant_id in config or TENANT_ID environment variable")
+    
+    if kb_config['kb_id'] == PLACEHOLDER_KB_ID:
+        env_kb_id = os.environ.get('KB_ID')
+        if env_kb_id:
+            kb_config['kb_id'] = env_kb_id
+            logger.info(f"Using KB_ID from environment: {env_kb_id}")
+        else:
+            raise ValueError("Please set kb_id in config or KB_ID environment variable")
 
 
 async def run_graphrag_indexing(config: dict, kb: dict, tenant: dict, chat_mdl, embed_mdl):
@@ -93,8 +130,9 @@ async def run_graphrag_indexing(config: dict, kb: dict, tenant: dict, chat_mdl, 
     }
     
     # Create a row dict simulating task structure
+    task_id = f"dual_index_graphrag_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{get_uuid()[:8]}"
     row = {
-        "id": "dual_index_graphrag_task",
+        "id": task_id,
         "tenant_id": kb.tenant_id,
         "kb_id": kb.id,
         "name": kb.name,
@@ -154,8 +192,9 @@ async def run_raptor_indexing(config: dict, kb: dict, tenant: dict, chat_mdl, em
     }
     
     # Create a row dict simulating task structure
+    task_id = f"dual_index_raptor_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{get_uuid()[:8]}"
     row = {
-        "id": "dual_index_raptor_task",
+        "id": task_id,
         "tenant_id": kb.tenant_id,
         "kb_id": kb.id,
         "name": kb.name,
@@ -166,12 +205,19 @@ async def run_raptor_indexing(config: dict, kb: dict, tenant: dict, chat_mdl, em
         logger.info(f"[RAPTOR] {msg}")
     
     try:
+        # Get embedding dimension - only computed once per execution
+        # This is necessary as the RAPTOR implementation requires explicit vector size
+        if not hasattr(embed_mdl, '_cached_vector_size'):
+            test_embedding, _ = embed_mdl.encode(["test"])
+            embed_mdl._cached_vector_size = len(test_embedding[0])
+        vector_size = embed_mdl._cached_vector_size
+        
         result = await run_raptor_for_kb(
             row=row,
             kb_parser_config=kb_parser_config,
             chat_mdl=chat_mdl,
             embd_mdl=embed_mdl,
-            vector_size=len(embed_mdl.encode(["test"])[0][0]),
+            vector_size=vector_size,
             callback=callback,
             doc_ids=doc_ids,
         )
@@ -253,8 +299,8 @@ def perform_dual_retrieval(config: dict, query: str, kb: dict, tenant: dict, emb
                 "page": 1,
                 "size": raptor_retrieval_config.get('top_n', 3),
                 "similarity": raptor_retrieval_config.get('similarity_threshold', 0.2),
-                "raptor_kwd": "raptor",  # Filter for RAPTOR chunks
-                "available_int": 1,
+                "raptor_kwd": RAPTOR_KEYWORD,  # Filter for RAPTOR chunks
+                "available_int": AVAILABLE_CHUNK_FLAG,
             }
             
             sres = settings.retriever.search(
@@ -304,7 +350,7 @@ def perform_dual_retrieval(config: dict, query: str, kb: dict, tenant: dict, emb
             combined = results['raptor_chunks'][:max_total_chunks]
         else:
             combined = results['standard_chunks'][:max_total_chunks]
-    else:  # parallel
+    elif combination_strategy == 'parallel':
         # Mix all results evenly
         combined = []
         max_per_type = max_total_chunks // 3
@@ -314,6 +360,17 @@ def perform_dual_retrieval(config: dict, query: str, kb: dict, tenant: dict, emb
             combined.extend(results['raptor_chunks'][:max_per_type])
         if results['standard_chunks']:
             combined.extend(results['standard_chunks'][:max_per_type])
+    else:
+        # Invalid strategy - log warning and fall back to hybrid
+        logger.warning(f"Invalid combination strategy '{combination_strategy}', falling back to 'hybrid'")
+        combined = []
+        if results['graphrag_chunks']:
+            combined.extend(results['graphrag_chunks'])
+        if results['raptor_chunks']:
+            combined.extend(results['raptor_chunks'][:max(1, max_total_chunks // 3)])
+        if results['standard_chunks']:
+            remaining = max_total_chunks - len(combined)
+            combined.extend(results['standard_chunks'][:remaining])
     
     results['combined_chunks'] = combined[:max_total_chunks]
     logger.info(f"Combined {len(results['combined_chunks'])} chunks using {combination_strategy} strategy")
@@ -330,13 +387,13 @@ def print_retrieval_results(results: dict):
     print(f"\n[GraphRAG] Retrieved {len(results['graphrag_chunks'])} chunks")
     for i, chunk in enumerate(results['graphrag_chunks'], 1):
         print(f"\n--- GraphRAG Chunk {i} ---")
-        content = chunk.get('content_with_weight', '')[:500]
+        content = chunk.get('content_with_weight', '')[:CONTENT_PREVIEW_LENGTH]
         print(f"Content: {content}...")
     
     print(f"\n[RAPTOR] Retrieved {len(results['raptor_chunks'])} chunks")
     for i, chunk in enumerate(results['raptor_chunks'], 1):
         print(f"\n--- RAPTOR Chunk {i} ---")
-        content = chunk.get('content_with_weight', '')[:500]
+        content = chunk.get('content_with_weight', '')[:CONTENT_PREVIEW_LENGTH]
         print(f"Content: {content}...")
     
     print(f"\n[Standard] Retrieved {len(results['standard_chunks'])} chunks")
