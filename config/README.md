@@ -36,6 +36,13 @@ Edit `config/dual_index_config.yaml` and update:
 
 ## Usage
 
+### Quick Start
+
+For a quick overview of usage examples, run:
+```bash
+./config/example_usage.sh
+```
+
 ### Indexing Only
 
 Generate both concept graph and summary tree indices:
