@@ -1,0 +1,71 @@
+# Dual Index Configuration for Concept Graph and Summary Tree Retrieval
+# This configuration enables both GraphRAG (concept graph) and RAPTOR (summary tree) indexing and retrieval
+
+# Knowledge Base Configuration
+# You can also set these via environment variables: TENANT_ID and KB_ID
+knowledgebase:
+  tenant_id: "your_tenant_id"  # Replace with actual tenant ID or use $TENANT_ID env var
+  kb_id: "your_kb_id"          # Replace with actual knowledge base ID or use $KB_ID env var
+  kb_name: "Dual Index KB"
+
+# LLM Configuration
+llm:
+  chat_model: "your_chat_model"        # e.g., "gpt-4" or "deepseek-chat"
+  embedding_model: "your_embed_model"  # e.g., "BAAI/bge-large-zh-v1.5"
+  
+# GraphRAG (Concept Graph) Configuration
+graphrag:
+  enabled: true
+  method: "light"  # Options: "light" or "general"
+  entity_types: []  # Leave empty for automatic entity type detection
+  with_resolution: true  # Enable entity resolution
+  with_community: true   # Enable community detection
+  
+# RAPTOR (Summary Tree) Configuration
+raptor:
+  enabled: true
+  max_cluster: 64
+  max_token: 512
+  threshold: 0.1
+  random_seed: 42
+  scope: "kb"  # Options: "file" or "kb" (knowledge base level)
+  prompt: |
+    Write a comprehensive summary of the following:
+    {cluster_content}
+    The summary should cover all the key points and main ideas presented.
+    SUMMARY:
+
+# Dual Retrieval Configuration
+retrieval:
+  # Standard chunk retrieval
+  top_n: 6
+  similarity_threshold: 0.3
+  keywords_similarity_weight: 0.5
+  
+  # GraphRAG retrieval
+  graphrag:
+    enabled: true
+    ent_topn: 6
+    rel_topn: 6
+    comm_topn: 1
+    ent_sim_threshold: 0.3
+    rel_sim_threshold: 0.3
+  
+  # RAPTOR retrieval
+  raptor:
+    enabled: true
+    top_n: 3
+    similarity_threshold: 0.2
+  
+  # Combination strategy
+  combination: "hybrid"  # Options: "hybrid", "sequential", "parallel"
+  max_total_chunks: 10
+
+# Indexing Configuration
+indexing:
+  # Which documents to process (empty means all)
+  doc_ids: []
+  
+  # Processing options
+  max_parallel_docs: 4
+  enable_timeout_assertion: false
