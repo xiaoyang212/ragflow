@@ -1,4 +1,3 @@
-import Image from '@/components/image';
 import SvgIcon from '@/components/svg-icon';
 
 import {
@@ -11,13 +10,11 @@ import {
   preprocessLaTeX,
   replaceTextByOldReg,
   replaceThinkToSection,
-  showImage,
 } from '@/utils/chat';
 import { getExtension } from '@/utils/document-util';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Flex, Popover, Tooltip } from 'antd';
 import classNames from 'classnames';
-import DOMPurify from 'dompurify';
 import 'katex/dist/katex.min.css';
 import { omit } from 'lodash';
 import { pipe } from 'lodash/fp';
@@ -149,7 +146,6 @@ const FloatingChatWidgetMarkdown = ({
         documentUrl,
         fileThumbnail,
         fileExtension,
-        imageId,
         chunkItem,
         documentId,
         document,
@@ -160,29 +156,7 @@ const FloatingChatWidgetMarkdown = ({
           key={`popover-content-${chunkItem.id}`}
           className="flex gap-2 widget-citation-content"
         >
-          {imageId && (
-            <Popover
-              placement="left"
-              content={
-                <Image
-                  id={imageId}
-                  className="max-w-[80vw] max-h-[60vh] rounded"
-                />
-              }
-            >
-              <Image
-                id={imageId}
-                className="w-24 h-24 object-contain rounded m-1 cursor-pointer"
-              />
-            </Popover>
-          )}
           <div className="space-y-2 flex-1 min-w-0">
-            <div
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(chunkItem?.content ?? ''),
-              }}
-              className="max-h-[250px] overflow-y-auto text-xs leading-relaxed p-2 bg-gray-50 dark:bg-gray-800 rounded prose-sm"
-            ></div>
             {documentId && (
               <Flex gap={'small'} align="center">
                 {fileThumbnail ? (
@@ -242,25 +216,6 @@ const FloatingChatWidgetMarkdown = ({
           );
         }
 
-        const { imageId, chunkItem, documentId, fileExtension, documentUrl } =
-          info;
-
-        if (showImage(chunkItem?.doc_type)) {
-          return (
-            <Image
-              key={`img-${i}`}
-              id={imageId}
-              className="block object-contain max-w-full max-h-48 rounded my-2 cursor-pointer"
-              onClick={handleDocumentButtonClick(
-                documentId,
-                chunkItem,
-                fileExtension === 'pdf',
-                documentUrl,
-              )}
-            />
-          );
-        }
-
         return (
           <Popover content={getPopoverContent(chunkIndex)} key={`popover-${i}`}>
             <InfoCircleOutlined className={styles.referenceIcon} />
@@ -268,7 +223,7 @@ const FloatingChatWidgetMarkdown = ({
         );
       });
     },
-    [getPopoverContent, getReferenceInfo, handleDocumentButtonClick],
+    [getPopoverContent, getReferenceInfo],
   );
 
   return (
