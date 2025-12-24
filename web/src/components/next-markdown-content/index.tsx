@@ -69,26 +69,6 @@ function MarkdownContent({
     setDocumentIds(Array.isArray(docAggs) ? docAggs.map((x) => x.doc_id) : []);
   }, [reference, setDocumentIds]);
 
-  const handleDocumentButtonClick = useCallback(
-    (
-      documentId: string,
-      chunk: IReferenceChunk,
-      isPdf: boolean,
-      documentUrl?: string,
-    ) =>
-      () => {
-        if (!isPdf) {
-          if (!documentUrl) {
-            return;
-          }
-          window.open(documentUrl, '_blank');
-        } else {
-          clickDocumentButton?.(documentId, chunk);
-        }
-      },
-    [clickDocumentButton],
-  );
-
   const rehypeWrapReference = () => {
     return function wrapTextTransform(tree: any) {
       visitParents(tree, 'text', (node, ancestors) => {

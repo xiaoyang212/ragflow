@@ -67,24 +67,6 @@ const FloatingChatWidgetMarkdown = ({
     setDocumentIds(docList.map((x: any) => x.doc_id).filter(Boolean));
   }, [reference, setDocumentIds]);
 
-  const handleDocumentButtonClick = useCallback(
-    (
-      documentId: string,
-      chunk: IReferenceChunk,
-      isPdf: boolean,
-      documentUrl?: string,
-    ) =>
-      () => {
-        if (!documentId) return;
-        if (!isPdf && documentUrl) {
-          window.open(documentUrl, '_blank');
-        } else if (clickDocumentButton) {
-          clickDocumentButton(documentId, chunk);
-        }
-      },
-    [clickDocumentButton],
-  );
-
   const rehypeWrapReference = () => (tree: any) => {
     visitParents(tree, 'text', (node, ancestors) => {
       const latestAncestor = ancestors[ancestors.length - 1];
