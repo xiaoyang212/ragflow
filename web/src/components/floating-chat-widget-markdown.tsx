@@ -143,7 +143,6 @@ const FloatingChatWidgetMarkdown = ({
       }
 
       const {
-        documentUrl,
         fileThumbnail,
         fileExtension,
         chunkItem,
@@ -168,38 +167,16 @@ const FloatingChatWidgetMarkdown = ({
                 ) : (
                   <SvgIcon name={`file-icon/${fileExtension}`} width={20} />
                 )}
-                <Tooltip
-                  title={
-                    !documentUrl && fileExtension !== 'pdf'
-                      ? 'Document link unavailable'
-                      : document.doc_name
-                  }
-                >
-                  <Button
-                    type="link"
-                    size="small"
-                    className="p-0 text-xs break-words h-auto text-left flex-1"
-                    onClick={handleDocumentButtonClick(
-                      documentId,
-                      chunkItem,
-                      fileExtension === 'pdf',
-                      documentUrl,
-                    )}
-                    disabled={!documentUrl && fileExtension !== 'pdf'}
-                    style={{ whiteSpace: 'normal' }}
-                  >
-                    <span className="truncate">
-                      {document?.doc_name ?? 'Unnamed Document'}
-                    </span>
-                  </Button>
-                </Tooltip>
+                <span className="text-xs break-words flex-1 truncate">
+                  {document?.doc_name ?? 'Unnamed Document'}
+                </span>
               </Flex>
             )}
           </div>
         </div>
       );
     },
-    [getReferenceInfo, handleDocumentButtonClick],
+    [getReferenceInfo],
   );
 
   const renderReference = useCallback(

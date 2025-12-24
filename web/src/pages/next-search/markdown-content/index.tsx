@@ -170,25 +170,16 @@ const MarkdownContent = ({
                     width={24}
                   ></SvgIcon>
                 )}
-                <Button
-                  variant="link"
-                  className={classNames(styles.documentLink, 'text-wrap')}
-                  onClick={handleDocumentButtonClick(
-                    documentId,
-                    chunkItem,
-                    // fileExtension === 'pdf',
-                    // documentUrl,
-                  )}
-                >
+                <span className="text-wrap text-sm">
                   {document?.doc_name}
-                </Button>
+                </span>
               </div>
             )}
           </div>
         </div>
       );
     },
-    [getReferenceInfo, handleDocumentButtonClick],
+    [getReferenceInfo],
   );
 
   const renderReference = useCallback(

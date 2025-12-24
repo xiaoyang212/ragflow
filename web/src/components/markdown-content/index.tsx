@@ -135,7 +135,6 @@ const MarkdownContent = ({
   const getPopoverContent = useCallback(
     (chunkIndex: number) => {
       const {
-        documentUrl,
         fileThumbnail,
         fileExtension,
         chunkItem,
@@ -160,25 +159,16 @@ const MarkdownContent = ({
                     width={24}
                   ></SvgIcon>
                 )}
-                <Button
-                  variant="link"
-                  className={'text-wrap p-0'}
-                  onClick={handleDocumentButtonClick(
-                    documentId,
-                    chunkItem,
-                    fileExtension === 'pdf',
-                    documentUrl,
-                  )}
-                >
+                <span className="text-wrap text-sm">
                   {document?.doc_name}
-                </Button>
+                </span>
               </section>
             )}
           </div>
         </div>
       );
     },
-    [getReferenceInfo, handleDocumentButtonClick],
+    [getReferenceInfo],
   );
 
   const renderReference = useCallback(

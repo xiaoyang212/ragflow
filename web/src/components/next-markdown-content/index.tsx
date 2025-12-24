@@ -137,7 +137,6 @@ function MarkdownContent({
   const renderPopoverContent = useCallback(
     (chunkIndex: number) => {
       const {
-        documentUrl,
         fileThumbnail,
         fileExtension,
         chunkItem,
@@ -162,25 +161,16 @@ function MarkdownContent({
                     width={24}
                   ></SvgIcon>
                 )}
-                <Button
-                  variant="link"
-                  onClick={handleDocumentButtonClick(
-                    documentId,
-                    chunkItem,
-                    fileExtension === 'pdf',
-                    documentUrl,
-                  )}
-                  className="text-ellipsis text-wrap"
-                >
+                <span className="text-ellipsis text-wrap text-sm">
                   {document?.doc_name}
-                </Button>
+                </span>
               </div>
             )}
           </div>
         </div>
       );
     },
-    [getReferenceInfo, handleDocumentButtonClick],
+    [getReferenceInfo],
   );
 
   const renderReference = useCallback(
