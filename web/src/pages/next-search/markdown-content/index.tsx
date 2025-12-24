@@ -1,4 +1,3 @@
-import Image from '@/components/image';
 import SvgIcon from '@/components/svg-icon';
 import { IReference, IReferenceChunk } from '@/interfaces/database/chat';
 import { getExtension } from '@/utils/document-util';
@@ -23,7 +22,6 @@ import {
   preprocessLaTeX,
   replaceTextByOldReg,
   replaceThinkToSection,
-  showImage,
 } from '@/utils/chat';
 
 import { Button } from '@/components/ui/button';
@@ -150,7 +148,6 @@ const MarkdownContent = ({
       const {
         fileThumbnail,
         fileExtension,
-        imageId,
         chunkItem,
         documentId,
         document,
@@ -158,31 +155,9 @@ const MarkdownContent = ({
 
       return (
         <div key={chunkItem?.id} className="flex gap-2">
-          {imageId && (
-            <Popover>
-              <PopoverTrigger>
-                <Image
-                  id={imageId}
-                  className={styles.referenceChunkImage}
-                ></Image>
-              </PopoverTrigger>
-              <PopoverContent>
-                <Image
-                  id={imageId}
-                  className={styles.referenceImagePreview}
-                ></Image>
-              </PopoverContent>
-            </Popover>
-          )}
-          <div className={'space-y-2 max-w-[40vw]'}>
-            <div
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(chunkItem?.content ?? ''),
-              }}
-              className={classNames(styles.chunkContentText)}
-            ></div>
+          <div className={'space-y-2'}>
             {documentId && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 {fileThumbnail ? (
                   <img
                     src={fileThumbnail}
@@ -221,26 +196,7 @@ const MarkdownContent = ({
       let replacedText = reactStringReplace(text, currentReg, (match, i) => {
         const chunkIndex = getChunkIndex(match);
 
-        const { imageId, chunkItem, documentId } = getReferenceInfo(chunkIndex);
-
-        const docType = chunkItem?.doc_type;
-
-        return showImage(docType) ? (
-          <Image
-            id={imageId}
-            className={styles.referenceInnerChunkImage}
-            onClick={
-              documentId
-                ? handleDocumentButtonClick(
-                    documentId,
-                    chunkItem,
-                    // fileExtension === 'pdf',
-                    // documentUrl,
-                  )
-                : () => {}
-            }
-          ></Image>
-        ) : (
+        return (
           <Popover>
             <PopoverTrigger>
               <InfoCircleOutlined className={styles.referenceIcon} />
@@ -254,7 +210,7 @@ const MarkdownContent = ({
 
       return replacedText;
     },
-    [getPopoverContent, getReferenceInfo, handleDocumentButtonClick],
+    [getPopoverContent],
   );
 
   return (
