@@ -1,4 +1,3 @@
-import Image from '@/components/image';
 import SvgIcon from '@/components/svg-icon';
 import { IReference, IReferenceChunk } from '@/interfaces/database/chat';
 import { getExtension } from '@/utils/document-util';
@@ -23,7 +22,6 @@ import {
   preprocessLaTeX,
   replaceTextByOldReg,
   replaceThinkToSection,
-  showImage,
 } from '@/utils/chat';
 import classNames from 'classnames';
 import { omit } from 'lodash';
@@ -71,26 +69,6 @@ const MarkdownContent = ({
     setDocumentIds(Array.isArray(docAggs) ? docAggs.map((x) => x.doc_id) : []);
   }, [reference, setDocumentIds]);
 
-  const handleDocumentButtonClick = useCallback(
-    (
-      documentId: string,
-      chunk: IReferenceChunk,
-      isPdf: boolean,
-      documentUrl?: string,
-    ) =>
-      () => {
-        if (!isPdf) {
-          if (!documentUrl) {
-            return;
-          }
-          window.open(documentUrl, '_blank');
-        } else {
-          clickDocumentButton?.(documentId, chunk);
-        }
-      },
-    [clickDocumentButton],
-  );
-
   const rehypeWrapReference = () => {
     return function wrapTextTransform(tree: any) {
       visitParents(tree, 'text', (node, ancestors) => {
@@ -137,10 +115,8 @@ const MarkdownContent = ({
   const getPopoverContent = useCallback(
     (chunkIndex: number) => {
       const {
-        documentUrl,
         fileThumbnail,
         fileExtension,
-        imageId,
         chunkItem,
         documentId,
         document,
@@ -148,31 +124,9 @@ const MarkdownContent = ({
 
       return (
         <div key={chunkItem?.id} className="flex gap-2">
-          {imageId && (
-            <HoverCard>
-              <HoverCardTrigger>
-                <Image
-                  id={imageId}
-                  className={styles.referenceChunkImage}
-                ></Image>
-              </HoverCardTrigger>
-              <HoverCardContent>
-                <Image
-                  id={imageId}
-                  className={styles.referenceImagePreview}
-                ></Image>
-              </HoverCardContent>
-            </HoverCard>
-          )}
-          <div className={'space-y-2 max-w-[40vw]'}>
-            <div
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(chunkItem?.content ?? ''),
-              }}
-              className={classNames(styles.chunkContentText)}
-            ></div>
+          <div className={'space-y-2'}>
             {documentId && (
-              <section className="flex gap-1">
+              <section className="flex gap-1 items-center">
                 {fileThumbnail ? (
                   <img
                     src={fileThumbnail}
@@ -185,25 +139,16 @@ const MarkdownContent = ({
                     width={24}
                   ></SvgIcon>
                 )}
-                <Button
-                  variant="link"
-                  className={'text-wrap p-0'}
-                  onClick={handleDocumentButtonClick(
-                    documentId,
-                    chunkItem,
-                    fileExtension === 'pdf',
-                    documentUrl,
-                  )}
-                >
+                <span className="text-wrap text-sm">
                   {document?.doc_name}
-                </Button>
+                </span>
               </section>
             )}
           </div>
         </div>
       );
     },
-    [getReferenceInfo, handleDocumentButtonClick],
+    [getReferenceInfo],
   );
 
   const renderReference = useCallback(
@@ -211,35 +156,12 @@ const MarkdownContent = ({
       let replacedText = reactStringReplace(text, currentReg, (match, i) => {
         const chunkIndex = getChunkIndex(match);
 
-        const { documentUrl, fileExtension, imageId, chunkItem, documentId } =
-          getReferenceInfo(chunkIndex);
-
-        const docType = chunkItem?.doc_type;
-
-        return showImage(docType) ? (
-          <section>
-            <Image
-              id={imageId}
-              className={styles.referenceInnerChunkImage}
-              onClick={
-                documentId
-                  ? handleDocumentButtonClick(
-                      documentId,
-                      chunkItem,
-                      fileExtension === 'pdf',
-                      documentUrl,
-                    )
-                  : () => {}
-              }
-            ></Image>
-            <span className="text-accent-primary"> {imageId}</span>
-          </section>
-        ) : (
+        return (
           <HoverCard key={i}>
             <HoverCardTrigger>
               <CircleAlert className="size-4 inline-block" />
             </HoverCardTrigger>
-            <HoverCardContent className="max-w-3xl">
+            <HoverCardContent>
               {getPopoverContent(chunkIndex)}
             </HoverCardContent>
           </HoverCard>
@@ -252,7 +174,7 @@ const MarkdownContent = ({
 
       return replacedText;
     },
-    [getPopoverContent, getReferenceInfo, handleDocumentButtonClick],
+    [getPopoverContent],
   );
 
   return (
