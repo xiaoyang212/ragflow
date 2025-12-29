@@ -11,6 +11,7 @@ import { memo, useCallback, useMemo } from 'react';
 
 import { IRegenerateMessage, IRemoveMessageById } from '@/hooks/logic-hooks';
 import { cn } from '@/lib/utils';
+import { normalizeDocAggs } from '@/utils/chat';
 import MarkdownContent from '../markdown-content';
 import { ReferenceDocumentList } from '../next-message-item/reference-document-list';
 import { UploadedMessageFiles } from '../next-message-item/uploaded-message-files';
@@ -58,7 +59,7 @@ const MessageItem = ({
   }, [item?.files]);
 
   const referenceDocumentList = useMemo(() => {
-    return reference?.doc_aggs ?? [];
+    return normalizeDocAggs(reference?.doc_aggs);
   }, [reference?.doc_aggs]);
 
   const handleRegenerateMessage = useCallback(() => {

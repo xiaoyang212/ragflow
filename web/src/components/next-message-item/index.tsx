@@ -21,6 +21,7 @@ import { INodeEvent, MessageEventType } from '@/hooks/use-send-message';
 import { cn } from '@/lib/utils';
 import { AgentChatContext } from '@/pages/agent/context';
 import { WorkFlowTimeline } from '@/pages/agent/log-sheet/workflow-timeline';
+import { normalizeDocAggs } from '@/utils/chat';
 import { isEmpty } from 'lodash';
 import { Atom, ChevronDown, ChevronUp } from 'lucide-react';
 import MarkdownContent from '../next-markdown-content';
@@ -90,9 +91,7 @@ function MessageItem({
   }, [loading, setLastSendLoadingFunc, item.id]);
 
   const referenceDocuments = useMemo(() => {
-    const docs = reference?.doc_aggs ?? {};
-
-    return Object.values(docs);
+    return normalizeDocAggs(reference?.doc_aggs);
   }, [reference?.doc_aggs]);
 
   const handleRegenerateMessage = useCallback(() => {
