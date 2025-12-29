@@ -90,9 +90,18 @@ function MessageItem({
   }, [loading, setLastSendLoadingFunc, item.id]);
 
   const referenceDocuments = useMemo(() => {
-    const docs = reference?.doc_aggs ?? {};
-
-    return Object.values(docs);
+    const docAggs = reference?.doc_aggs;
+    
+    if (!docAggs) {
+      return [];
+    }
+    
+    // Handle both array and object formats
+    if (Array.isArray(docAggs)) {
+      return docAggs;
+    }
+    
+    return Object.values(docAggs);
   }, [reference?.doc_aggs]);
 
   const handleRegenerateMessage = useCallback(() => {
