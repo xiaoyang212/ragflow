@@ -97,6 +97,7 @@ export const replaceTextByOldReg = (text: string) => {
 /**
  * Normalize doc_aggs to array format
  * Handles both array and object formats returned by different backends
+ * @template T - The type of document aggregation object (e.g., Docagg)
  * @param docAggs - Can be array, object, null, or undefined
  * @returns Array of document aggregations
  */
